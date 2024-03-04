@@ -3,7 +3,7 @@ import numpy as np
 # Initialize a 20x20 grid with zeros
 grid = np.zeros((20, 20), dtype=int)
 
-score=0
+score = 0
 # Define the points for a Greek cross
 cross_points = [
     (5, 8), (6, 8), (7, 8), (8, 8), (8, 7), (8, 6), (8, 5),
@@ -26,28 +26,28 @@ played_sequences = []
 
 
 
-def print_grid(grid, previous_cells):
+
+
+
+def print_grid(grid, played_sequences):
     for i, row in enumerate(grid):
-        # Print row index
         print(f"{i:2d} ", end="")
         for j, val in enumerate(row):
-            if (i, j) in previous_cells:
-                print(" \033[93m#\033[0m", end=" ")  # Print previously chosen cell with yellow '#'
+            cell = (i, j)
+            # Determine cell color based on its inclusion in previous sequences
+            if any(cell in sequence[0] for sequence in played_sequences):
+                cell_color = " \033[93m#\033[0m"  # Yellow for cells in any previous sequences
             elif val == 1:
-                print(" \033[91m#\033[0m", end=" ")  # ANSI escape code for red color
+                cell_color = " \033[91m#\033[0m"  # Red for the Greek cross and any other marked cells
             else:
-                print(" .", end=" ")
-            # Print legend numbers for each column
+                cell_color = " ."  # Unmarked cells remain unchanged
+            print(cell_color, end=" ")
             print(f"{j:2d}", end="")
-        print()
- # New line after each row
 
-def is_adjacent_to_chosen_or_cross(row, col):
-    relevant_points = cross_points + previous_cells
-    for point in relevant_points:
-        if abs(point[0] - row) <= 1 and abs(point[1] - col) <= 1:
-            return True
-    return False
+        print()
+
+# New line after each row
+
 
 def is_adjacent_to_chosen_or_cross(row, col, cross_points, previous_cells):
     for dx in [-1, 0, 1]:
@@ -60,55 +60,64 @@ def is_adjacent_to_chosen_or_cross(row, col, cross_points, previous_cells):
 def validate_sequence(chosen_cell, start_row, start_col, end_row, end_col, cross_points, previous_cells):
     # Initialize sequence coordinates
     sequence_coordinates = []
+    sequence_nature = ''  # To store the nature of the sequence
 
     # Determine direction of the sequence
     if start_row == end_row:  # Horizontal
         step = 1 if end_col > start_col else -1
         for i in range(start_col, end_col + step, step):
             sequence_coordinates.append((start_row, i))
+        sequence_nature = 'Horizontal'
     elif start_col == end_col:  # Vertical
         step = 1 if end_row > start_row else -1
         for i in range(start_row, end_row + step, step):
             sequence_coordinates.append((i, start_col))
+        sequence_nature = 'Vertical'
     elif abs(start_row - end_row) == abs(start_col - end_col):  # Diagonal
         row_step = 1 if end_row > start_row else -1
         col_step = 1 if end_col > start_col else -1
         for i in range(abs(end_row - start_row) + 1):
             sequence_coordinates.append((start_row + i * row_step, start_col + i * col_step))
+        sequence_nature = 'Diagonal'
     else:
-        return False, "Sequence must be horizontal, vertical, or diagonal.", []
+        return False, "Sequence must be horizontal, vertical, or diagonal.", [], ''
 
     # Check if the chosen cell is within the sequence and the sequence contains valid cells
     if chosen_cell not in sequence_coordinates:
-        return False, "Chosen cell is not part of the sequence.", []
+        return False, "Chosen cell is not part of the sequence.", [], ''
 
     valid_cells_count = sum(
         cell in cross_points or cell in previous_cells or cell == chosen_cell for cell in sequence_coordinates)
 
     # Ensure the sequence is exactly 5 cells and all are valid
     if len(sequence_coordinates) == 5 and valid_cells_count == 5:
-        return True, "Sequence is valid", sequence_coordinates
+        return True, "Sequence is valid", sequence_coordinates, sequence_nature
     else:
-        return False, "Sequence does not contain exactly 5 valid cells or contains invalid cells.", []
+        return False, "Sequence does not contain exactly 5 valid cells or contains invalid cells.", [], ''
+
 
 
 def choose_cell_and_sequence():
     try:
-        chosen_row, chosen_col = map(int, input("Enter chosen cell row and column numbers (0-19), separated by a space: ").split())
+        chosen_row, chosen_col = map(int, input(
+            "Enter chosen cell row and column numbers (0-19), separated by a space: ").split())
         if not is_adjacent_to_chosen_or_cross(chosen_row, chosen_col, cross_points, previous_cells):
             print("Bad Move Try again")
             return None, None  # Ensure function returns a tuple even in case of error
-        start_row, start_col = map(int, input("Enter start cell row and column numbers for the sequence (0-19), separated by a space: ").split())
-        end_row, end_col = map(int, input("Enter end cell row and column numbers for the sequence (0-19), separated by a space: ").split())
+        start_row, start_col = map(int, input(
+            "Enter start cell row and column numbers for the sequence (0-19), separated by a space: ").split())
+        end_row, end_col = map(int, input(
+            "Enter end cell row and column numbers for the sequence (0-19), separated by a space: ").split())
 
         return (chosen_row, chosen_col), (start_row, start_col, end_row, end_col)
     except ValueError:
         print("Error: Please enter integers for row and column numbers.")
         return None, None  # Ensure function returns a tuple even in case of error
 
+
 # Initial display of the grid
 print("Welcome to the game! Here's the current grid:")
-print_grid(grid, previous_cells)
+print_grid(grid,played_sequences)
 
 # Game loop
 while True:
@@ -120,15 +129,16 @@ while True:
             print("Error: Chosen cell is already marked. Please choose another cell.")
             continue
 
-        valid, message, sequence_coords = validate_sequence(chosen_cell, start_row, start_col, end_row, end_col,
+        valid, message, sequence_coords, sequence_nature = validate_sequence(chosen_cell, start_row, start_col, end_row, end_col,
                                                             cross_points, previous_cells)
         if valid:
             previous_cells.append(chosen_cell)
-            played_sequences.extend(sequence_coords)  # Store the valid sequence of coordinates
+            played_sequences.append((sequence_coords, sequence_nature))  # Include nature of the sequence
             score += 1
+            print(played_sequences)
             print(f"Chosen cell: {chosen_cell}, Valid Sequence: {sequence_coords}")
             print("Your score is: \033[94m" + str(score) + "\033[0m")
-            print_grid(grid, previous_cells)
+            print_grid(grid,played_sequences)
         else:
             print("Error:", message)
     else:
