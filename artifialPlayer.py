@@ -1,3 +1,5 @@
+
+#Morpion solitaire game
 import numpy as np
 
 # Initialize a 20x20 grid with zeros
@@ -32,17 +34,19 @@ played_sequences = []
 def print_grid(grid, played_sequences):
     for i, row in enumerate(grid):
         print(f"{i:2d} ", end="")
+
         for j, val in enumerate(row):
             cell = (i, j)
+            print(f"{j:2d}", end="")
+
             # Determine cell color based on its inclusion in previous sequences
             if any(cell in sequence[0] for sequence in played_sequences):
-                cell_color = " \033[93m#\033[0m"  # Yellow for cells in any previous sequences
+                cell_color = " \033[93m#\033[0m "  # Yellow for cells in any previous sequences
             elif val == 1:
-                cell_color = " \033[91m#\033[0m"  # Red for the Greek cross and any other marked cells
+                cell_color = " \033[91m#\033[0m "  # Red for the Greek cross and any other marked cells
             else:
-                cell_color = " ."  # Unmarked cells remain unchanged
+                cell_color = " . "  # Unmarked cells remain unchanged
             print(cell_color, end=" ")
-            print(f"{j:2d}", end="")
 
         print()
 
