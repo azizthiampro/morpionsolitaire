@@ -25,6 +25,8 @@ pygame.display.set_caption("20x20 Morpion solitaire game")
 black = (0, 0, 0)
 white = (255, 255, 255)
 red = (255, 0, 0)
+yellow = (255, 255, 0)
+green = (0, 255, 0)
 
 # Points to draw
 cross_points = [
@@ -102,6 +104,21 @@ def find_valid_sequence_with_center(new_cell, cross_points, played_sequences):
 
     return False, None, None
 
+def draw_line_through_cells(sequence, color, width=5):
+    # This function assumes 'sequence' is a list of tuples, where each tuple is (x, y) representing cell coordinates
+    if len(sequence) < 2:
+        return  # Need at least two points to draw a line
+
+    # Convert cell coordinates to pixel coordinates (center of each cell)
+    points = []
+    for cell in sequence:
+        center_x = cell[0] * (cell_size + margin) + margin + cell_size // 2
+        center_y = cell[1] * (cell_size + margin) + margin + cell_size // 2
+        points.append((center_x, center_y))
+
+    # Draw the line through all points
+    pygame.draw.lines(screen, color, False, points, width)
+
 
 # Initialize the score outside the main loop
 score = 0
@@ -137,6 +154,9 @@ while running:
             pygame.draw.rect(screen, white, rect)
     for point in cross_points:
         draw_dot(*point, black)
+    # draw lines
+    for sequence, _ in played_sequence:
+        draw_line_through_cells(sequence, green)  # Pass the sequence and a color for the line
 
     # Display visual feedback for invalid moves
     current_time = pygame.time.get_ticks()
