@@ -39,9 +39,6 @@ cross_points = [
 
 # Function to draw a cross in a cell
 
-
-
-
 def draw_dot(x, y, color):
     # Calculate the center position of the cell
     center_x = x * (cell_size + margin) + margin + cell_size // 2
