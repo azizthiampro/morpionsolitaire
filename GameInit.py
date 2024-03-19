@@ -139,6 +139,36 @@ class GameInit:
                         return True
         return False
 
+    def find_possible_moves(self):
+        possible_moves = []
+        directions = [
+            (0, 1),  # Up
+            (0, -1),  # Down
+            (1, 0),  # Right
+            (-1, 0),  # Left
+            (1, 1),  # Diagonal up-right
+            (-1, -1),  # Diagonal down-left
+            (1, -1),  # Diagonal down-right
+            (-1, 1),  # Diagonal up-left
+        ]
+
+        for point in self.cross_points:
+            for direction in directions:
+                for i in range(-4, 1):  # Shift the starting point in each direction to check for potential moves
+                    potential_move = (point[0] + i * direction[0], point[1] + i * direction[1])
+                    if 0 <= potential_move[0] < self.grid_size and 0 <= potential_move[1] < self.grid_size:
+                        sequence = [(
+                            potential_move[0] + j * direction[0],
+                            potential_move[1] + j * direction[1]
+                        ) for j in range(5)]
+                        if all(0 <= cell[0] < self.grid_size and 0 <= cell[1] < self.grid_size for cell in sequence):
+                            if sum(1 for cell in sequence if
+                                   cell in self.cross_points) == 4 and potential_move not in self.cross_points:
+                                if not self.is_sequence_overlapping(sequence, direction, self.played_sequence):
+                                    possible_moves.append(potential_move)
+
+        return possible_moves
+
     def main_loop(self):
         # Main loop of the game
         running = True
@@ -156,6 +186,9 @@ class GameInit:
                         self.played_cell.append(cell)
                         self.score += 1
                         self.played_sequence.append((sequence, direction))  # Include direction
+
+                        print("coups possible : ", self.find_possible_moves())
+                        print("coups joués : ", self.played_sequence)
                         # Après chaque coup valide, vérifier si d'autres lignes peuvent être créées
                         if not self.can_create_line(self.cross_points):
                             print("Fin de la partie. Votre score est :", self.score)
