@@ -17,7 +17,8 @@ class GameInit:
 
         # Window size
         self.width = self.grid_size * (self.cell_size + self.margin) + self.margin
-        self.height = self.grid_size * (self.cell_size + self.margin) + self.margin
+        # Window size with extra space for the score display
+        self.height = self.grid_size * (self.cell_size + self.margin) + self.margin + 50
 
         # Set up the display
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -62,16 +63,29 @@ class GameInit:
         return grid_x, grid_y
 
     def normalize_direction(self, direction):
-        """Normalise la direction pour ignorer le sens."""
         dx, dy = direction
-        return (abs(dx), abs(dy))
+        # Normalize horizontal and vertical directions
+        if dx == 0:
+            return (0, 1) if dy > 0 else (0, -1)
+        elif dy == 0:
+            return (1, 0) if dx > 0 else (-1, 0)
+        # Normalize diagonal directions
+        elif abs(dx) == abs(dy):
+            return (1, 1) if dx > 0 and dy > 0 else (-1, -1) if dx < 0 and dy < 0 else (
+            1, -1) if dx > 0 and dy < 0 else (-1, 1)
+        # Fallback for any other case (should not occur with proper input)
+        return (dx, dy)
 
     def is_sequence_overlapping(self, new_sequence, new_direction, played_sequences):
-        """Vérifie si la nouvelle séquence chevauche des séquences existantes dans la même direction absolue."""
         normalized_new_direction = self.normalize_direction(new_direction)
-        for seq, dir in played_sequences:
-            if self.normalize_direction(dir) == normalized_new_direction and set(seq) & set(new_sequence):
-                return True
+        for seq, dir1 in played_sequences:
+            normalized_existing_direction = self.normalize_direction(dir1)
+            if normalized_new_direction == normalized_existing_direction or normalized_new_direction == tuple(
+                    -x for x in normalized_existing_direction):
+                if new_sequence[0] == seq[-1] or new_sequence[-1] == seq[0]:
+                    continue
+                if set(seq) & set(new_sequence):
+                    return True
         return False
 
     def find_valid_sequence_with_center(self, new_cell):
@@ -153,20 +167,38 @@ class GameInit:
             (-1, 1),  # Diagonal up-left
         ]
 
-        for point in self.cross_points:
-            for direction in directions:
-                for i in range(-4, 1):  # Shift the starting point in each direction to check for potential moves
-                    potential_move = (point[0] + i * direction[0], point[1] + i * direction[1])
-                    if 0 <= potential_move[0] < self.grid_size and 0 <= potential_move[1] < self.grid_size:
-                        sequence = [(
-                            potential_move[0] + j * direction[0],
-                            potential_move[1] + j * direction[1]
-                        ) for j in range(5)]
-                        if all(0 <= cell[0] < self.grid_size and 0 <= cell[1] < self.grid_size for cell in sequence):
-                            if sum(1 for cell in sequence if
-                                   cell in self.cross_points) == 4 and potential_move not in self.cross_points:
-                                if not self.is_sequence_overlapping(sequence, direction, self.played_sequence):
-                                    possible_moves.append(potential_move)
+        # Iterate over every cell in the grid to check for potential moves
+        for x in range(self.grid_size):
+            for y in range(self.grid_size):
+                cell = (x, y)
+                # Skip the cell if it's already a part of cross_points
+                if cell in self.cross_points:
+                    continue
+
+                # Check every direction for possible sequences that include the cell
+                for direction in directions:
+                    is_valid_move = False
+                    for shift in range(-4,
+                                       1):  # Shift the starting point in each direction to check for potential moves
+                        potential_sequence = [
+                            (cell[0] + shift * direction[0] + i * direction[0],
+                             cell[1] + shift * direction[1] + i * direction[1])
+                            for i in range(5)
+                        ]
+
+                        # Check if the sequence is valid: within grid bounds and contains exactly one empty spot (the potential move)
+                        if all(0 <= p[0] < self.grid_size and 0 <= p[1] < self.grid_size for p in potential_sequence):
+                            cross_count = sum(p in self.cross_points for p in potential_sequence)
+                            if cross_count == 4:  # There are exactly 4 crosses in the sequence
+                                normalized_direction = self.normalize_direction(direction)
+                                if not self.is_sequence_overlapping(potential_sequence, normalized_direction,
+                                                                    self.played_sequence):
+                                    is_valid_move = True
+                                    break  # Break out of the shift loop as we've found a valid sequence for this direction
+
+                    if is_valid_move:
+                        possible_moves.append(cell)
+                        break  # Break out of the direction loop as we've found at least one valid sequence that includes the cell
 
         return possible_moves
 
@@ -254,10 +286,11 @@ class GameInit:
                 else:
                     self.invalid_moves.remove(move)
 
-            # Display the score
+            # Display the score outside the grid, in the new space at the bottom
             text = self.font.render(f'Score: {self.score}', True, self.white, self.red)
             text_rect = text.get_rect()
-            text_rect.center = (self.width // 2, 20)
+            # Center the score horizontally and position it in the extra space below the grid
+            text_rect.center = (self.width // 2, self.height - 25)  # Adjust Y position based on your design
             self.screen.blit(text, text_rect)
 
             pygame.display.flip()
