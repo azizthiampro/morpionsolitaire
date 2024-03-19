@@ -13,6 +13,7 @@ class GameInit:
         self.played_cell = []
         self.played_sequence = []
         self.invalid_moves = []  # Initialize a list to track invalid moves and their display time
+        self.coord_font = pygame.font.Font(None, 20)  # Smaller font for coordinates
 
         # Window size
         self.width = self.grid_size * (self.cell_size + self.margin) + self.margin
@@ -172,11 +173,19 @@ class GameInit:
     def main_loop(self):
         # Main loop of the game
         running = True
+        update_possible_moves = True  # Initialize flag to update and print possible moves
+
         while running:
+            if update_possible_moves:
+                possible_moves = self.find_possible_moves()  # Find possible moves at the current state
+                print("Possible moves: ", possible_moves)  # Print the list of possible moves
+                update_possible_moves = False  # Reset flag until the next change
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
+                    update_possible_moves = True  # Set flag to update possible moves on the next loop
                     pos = pygame.mouse.get_pos()
                     cell = self.get_cell_from_mouse_pos(pos)
                     valid, sequence, direction = self.find_valid_sequence_with_center(cell)
@@ -187,11 +196,10 @@ class GameInit:
                         self.score += 1
                         self.played_sequence.append((sequence, direction))  # Include direction
 
-                        print("coups possible : ", self.find_possible_moves())
-                        print("coups joués : ", self.played_sequence)
-                        # Après chaque coup valide, vérifier si d'autres lignes peuvent être créées
+                        print("Played moves: ", self.played_sequence)
+                        # After each valid move, check if other lines can be created
                         if not self.can_create_line(self.cross_points):
-                            print("Fin de la partie. Votre score est :", self.score)
+                            print("Game over. Your score is:", self.score)
                             running = False
                     else:
                         current_time = pygame.time.get_ticks()
@@ -199,13 +207,35 @@ class GameInit:
 
             self.screen.fill(self.black)
 
-            # Draw the grid and dots
+            # Draw the grid, dots, and coordinate labels on the edges
             for x in range(self.grid_size):
                 for y in range(self.grid_size):
-                    rect = pygame.Rect(x * (self.cell_size + self.margin) + self.margin, y * (
-                            self.cell_size + self.margin) + self.margin, self.cell_size,
-                                       self.cell_size)
+                    rect = pygame.Rect(x * (self.cell_size + self.margin) + self.margin,
+                                       y * (self.cell_size + self.margin) + self.margin, self.cell_size, self.cell_size)
                     pygame.draw.rect(self.screen, self.white, rect)
+
+                    # Only draw coordinate labels on the top edge and left edge of the grid
+                    if x == 0:  # Left edge, draw Y coordinates
+                        coord_text_y = f'{y}'
+                        text_surface_y = self.coord_font.render(coord_text_y, True, self.black)
+                        # Align text to the left, inside the cell
+                        text_y_x = rect.left + 3  # A small padding from the left edge
+                        text_y_y = rect.top + (rect.height - text_surface_y.get_height()) / 2  # Vertically centered
+                        self.screen.blit(text_surface_y, (text_y_x, text_y_y))
+
+                    if y == 0:  # Top edge, draw X coordinates
+                        coord_text_x = f'{x}'
+                        text_surface_x = self.coord_font.render(coord_text_x, True, self.black)
+                        # Align text to the top, inside the cell
+                        text_x_x = rect.left + (rect.width - text_surface_x.get_width()) / 2  # Horizontally centered
+                        text_x_y = rect.top + 3  # A small padding from the top edge
+                        self.screen.blit(text_surface_x, (text_x_x, text_x_y))
+
+            # Highlight possible moves in yellow
+            possible_moves = self.find_possible_moves()  # Get the list of possible moves
+            for move in possible_moves:
+                self.draw_dot(*move, self.yellow)  # Use the draw_dot method to draw the dot in yellow
+
             for point in self.cross_points:
                 self.draw_dot(*point, self.black)
             # draw lines
