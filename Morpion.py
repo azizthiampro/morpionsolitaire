@@ -1,13 +1,13 @@
 import pygame
 import sys
 
-class GameInit:
+class Morpion:
     def __init__(self):
         pygame.init()
 
         # Grid settings and other initializations
-        self.grid_size = 20
-        self.cell_size = 40
+        self.grid_size = 50
+        self.cell_size = 20
         self.margin = 1
         # Initialize other attributes...
         self.grid_size = 20
@@ -18,8 +18,8 @@ class GameInit:
         self.invalid_moves = []
 
         # Window size adjusted to accommodate numbers on the sides
-        self.width = self.grid_size * (self.cell_size + self.margin) + self.margin + 40  # Extra space for numbers
-        self.height = self.grid_size * (self.cell_size + self.margin) + self.margin + 40  # Extra space for numbers
+        self.width = self.grid_size * (self.cell_size + self.margin) + self.margin + 10  # Extra space for numbers
+        self.height = self.grid_size * (self.cell_size + self.margin) + self.margin + 10  # Extra space for numbers
 
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("20x20 Morpion Solitaire Game")
@@ -62,11 +62,11 @@ class GameInit:
                 pygame.draw.rect(self.screen, self.white, rect)
 
         # Drawing numbers for each column and row
-        for i in range(1, self.grid_size ):
-            # Numbers for columns
-            self.draw_text(str(i), 20 + (i) * (self.cell_size + self.margin), 10)
-            # Numbers for rows
-            self.draw_text(str(i), 10, 20 + (i) * (self.cell_size + self.margin))
+        # for i in range(1, self.grid_size ):
+        #     # Numbers for columns
+        #     self.draw_text(str(i), 20 + (i) * (self.cell_size + self.margin), 10)
+        #     # Numbers for rows
+        #     self.draw_text(str(i), 10, 20 + (i) * (self.cell_size + self.margin))
 
     def draw_text(self, text, x, y):
         """Draws text on the screen at the specified x, y coordinates."""
@@ -121,7 +121,7 @@ class GameInit:
         self.draw_grid()
         self.draw_cross_points()
         self.draw_played_lines()
-        self.draw_invalid_moves()
+        # self.draw_invalid_moves()
         self.draw_score()
 
     def draw_invalid_moves(self):
@@ -288,5 +288,5 @@ class GameInit:
         return possible_moves
 
 if __name__ == "__main__":
-    game = GameInit()
+    game = Morpion()
     game.main_loop()
