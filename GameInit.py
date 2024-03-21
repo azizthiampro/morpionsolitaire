@@ -43,7 +43,7 @@ class GameInit:
         self.score = 0  # Initialize the score
 
         # Define font for score display
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(None, 32)
 
     def draw_dot(self, x, y, color):
         # Calculate the center position of the cell
@@ -285,9 +285,11 @@ class GameInit:
                     pygame.draw.rect(self.screen, self.red, rect)
                 else:
                     self.invalid_moves.remove(move)
-
+            over = ""
+            if len(possible_moves) == 0:
+                over = "Game over"
             # Display the score outside the grid, in the new space at the bottom
-            text = self.font.render(f'Score: {self.score}', True, self.white, self.red)
+            text = self.font.render(f'Soft Version (Played by a user) - Score: {self.score} {over}', True, self.white)
             text_rect = text.get_rect()
             # Center the score horizontally and position it in the extra space below the grid
             text_rect.center = (self.width // 2, self.height - 25)  # Adjust Y position based on your design
@@ -303,3 +305,4 @@ class GameInit:
 if __name__ == "__main__":
     game = GameInit()
     game.main_loop()
+
