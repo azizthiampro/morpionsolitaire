@@ -214,6 +214,7 @@ class RandomPlayer:
                 possible_moves = self.find_possible_moves()
                 if possible_moves:
                     random_move = random.choice(possible_moves)
+
                     valid, sequence, direction = self.find_valid_sequence_with_center(random_move)
                     if valid:
                         self.cross_points.append(random_move)
