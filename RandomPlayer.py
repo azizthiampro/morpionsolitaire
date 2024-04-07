@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import pandas as pd  # Import pandas
 
 class RandomPlayer:
     def __init__(self):
@@ -14,7 +15,11 @@ class RandomPlayer:
         self.played_sequence = []
         self.invalid_moves = []  # Initialize a list to track invalid moves and their display time
         self.coord_font = pygame.font.Font(None, 20)  # Smaller font for coordinates
+        # Initialize the DataFrame with appropriate columns
+        self.moves_df = pd.DataFrame(columns=['ID', 'Move', 'Sequence', 'Direction'])
 
+        # Move ID counter
+        self.move_id = 1
         # Window size
         self.width = self.grid_size * (self.cell_size + self.margin) + self.margin
         # Window size with extra space for the score display
@@ -206,6 +211,7 @@ class RandomPlayer:
         running = True
         update_possible_moves = True
         last_move_time = pygame.time.get_ticks()
+        id=0
 
         while running:
             current_time = pygame.time.get_ticks()
@@ -221,6 +227,10 @@ class RandomPlayer:
                         self.score += 1
                         self.played_sequence.append((sequence, direction))
                         update_possible_moves = True
+                        new_row = {'ID': id, 'Move': random_move, 'Sequence': sequence, 'Direction': direction}
+                        self.moves_df.loc[len(self.moves_df)] = new_row
+                        id+=1
+
 
                 last_move_time = current_time
 
@@ -252,7 +262,8 @@ class RandomPlayer:
             self.screen.blit(score_text, (10, self.height - 40))
 
             pygame.display.flip()
-            pygame.time.wait(500)  # Small delay for game loop responsiveness
+            pygame.time.wait(100)
+        # Small delay for game loop responsiveness
 
         pygame.quit()
 
@@ -260,3 +271,4 @@ class RandomPlayer:
 if __name__ == "__main__":
     game = RandomPlayer()
     game.main_loop()
+
