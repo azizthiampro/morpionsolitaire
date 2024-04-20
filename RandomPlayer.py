@@ -3,49 +3,35 @@ import sys
 import random
 
 class RandomPlayer:
-    def __init__(self):
-        pygame.init()
+    def __init__(self, render=True):
+        self.render = render
+        if self.render:
+            pygame.init()
 
-        # Grid settings
+            # Les attributs suivants sont uniquement nécessaires si le rendu est activé
+            self.cell_size = 40
+            self.grid_size = 20
+            self.margin = 1
+            self.width = self.grid_size * (self.cell_size + self.margin) + self.margin
+            self.height = self.grid_size * (self.cell_size + self.margin) + self.margin + 50
+            self.screen = pygame.display.set_mode((self.width, self.height))
+            pygame.display.set_caption("20x20 Morpion solitaire game")
+            self.coord_font = pygame.font.Font(None, 20)
+            self.font = pygame.font.Font(None, 32)
+            # Colors
+            self.black = (0, 0, 0)
+            self.white = (255, 255, 255)
+            self.red = (255, 0, 0)
+            self.yellow = (255, 255, 0)
+            self.green = (0, 255, 0)
+
+            # Attributs communs, nécessaires indépendamment du rendu
         self.grid_size = 20
-        self.cell_size = 40  # Increased cell size for better visibility of the crosses
-        self.margin = 1
-        self.played_cell = []
-        self.played_sequence = []
-        self.invalid_moves = []  # Initialize a list to track invalid moves and their display time
-        self.coord_font = pygame.font.Font(None, 20)  # Smaller font for coordinates
-
-        # Window size
-        self.width = self.grid_size * (self.cell_size + self.margin) + self.margin
-        # Window size with extra space for the score display
-        self.height = self.grid_size * (self.cell_size + self.margin) + self.margin + 50
-
-        # Set up the display
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("20x20 Morpion solitaire game")
-
-        # Colors
-        self.black = (0, 0, 0)
-        self.white = (255, 255, 255)
-        self.red = (255, 0, 0)
-        self.yellow = (255, 255, 0)
-        self.green = (0, 255, 0)
-
-        # Points to draw
-        self.cross_points = [
-            (5, 8), (6, 8), (7, 8), (8, 8), (8, 7), (8, 6), (8, 5),
-            (14, 8), (13, 8), (12, 8), (11, 8), (11, 7), (11, 6), (11, 5),
-            (10, 5), (9, 5), (5, 9), (5, 10), (5, 11), (14, 9), (14, 10), (14, 11), (13, 11),
-            (12, 11), (11, 11), (6, 11), (7, 11), (8, 11), (8, 12), (8, 13), (8, 14), (11, 12),
-            (11, 13), (11, 14), (9, 14), (10, 14)
-        ]
-
-        self.score = 0  # Initialize the score
-
-        # Define font for score display
-        self.font = pygame.font.Font(None, 32)
+        self.reset_game()
 
     def draw_dot(self, x, y, color):
+        if not self.render:
+            return
         # Calculate the center position of the cell
         center_x = x * (self.cell_size + self.margin) + self.margin + self.cell_size // 2
         center_y = y * (self.cell_size + self.margin) + self.margin + self.cell_size // 2
@@ -57,6 +43,7 @@ class RandomPlayer:
         pygame.draw.circle(self.screen, color, (center_x, center_y), radius)
 
     def get_cell_from_mouse_pos(self, pos):
+
         x, y = pos
         grid_x = x // (self.cell_size + self.margin)
         grid_y = y // (self.cell_size + self.margin)
@@ -118,6 +105,8 @@ class RandomPlayer:
         return False, None, None
 
     def draw_line_through_cells(self, sequence, color, width=5):
+        if not self.render:
+            return
         # This function assumes 'sequence' is a list of tuples, where each tuple is (x, y) representing cell coordinates
         if len(sequence) < 2:
             return  # Need at least two points to draw a line
@@ -133,6 +122,7 @@ class RandomPlayer:
         pygame.draw.lines(self.screen, color, False, points, width)
 
     def can_create_line(self, points):
+
         directions = [(0, 1),  # Up
                       (0, -1),  # Down
                       (1, 0),  # Right
@@ -202,62 +192,110 @@ class RandomPlayer:
 
         return possible_moves
 
-    def main_loop(self):
-        running = True
-        update_possible_moves = True
-        last_move_time = pygame.time.get_ticks()
+    def reset_game(self):
+        # Réinitialise les points de départ des croix et le score
+        self.cross_points = [
+            (5, 8), (6, 8), (7, 8), (8, 8), (8, 7), (8, 6), (8, 5),
+            (14, 8), (13, 8), (12, 8), (11, 8), (11, 7), (11, 6), (11, 5),
+            (10, 5), (9, 5), (5, 9), (5, 10), (5, 11), (14, 9), (14, 10), (14, 11), (13, 11),
+            (12, 11), (11, 11), (6, 11), (7, 11), (8, 11), (8, 12), (8, 13), (8, 14), (11, 12),
+            (11, 13), (11, 14), (9, 14), (10, 14)
+        ]
+        self.played_cell = []
+        self.played_sequence = []
+        self.score = 0
 
-        while running:
-            current_time = pygame.time.get_ticks()
+    def main_loop(self, num_games=10):
+        global_best_score = 0  # Pour garder trace du meilleur score global
+        global_best_move = None  # Pour garder trace du meilleur coup de départ global
 
-            if update_possible_moves or current_time - last_move_time >= 1000:
-                possible_moves = self.find_possible_moves()
-                if possible_moves:
-                    random_move = random.choice(possible_moves)
+        self.reset_game()
+        initial_possible_moves = self.find_possible_moves()  # Trouve tous les coups de départ possibles
 
-                    valid, sequence, direction = self.find_valid_sequence_with_center(random_move)
-                    if valid:
-                        self.cross_points.append(random_move)
-                        self.played_cell.append(random_move)
-                        self.score += 1
-                        self.played_sequence.append((sequence, direction))
-                        update_possible_moves = True
+        for start_move in initial_possible_moves:
+            series_best_score = 0  # Meilleur score pour la série de jeux en cours
+            series_best_move = None  # Meilleur coup pour la série de jeux en cours
 
-                last_move_time = current_time
+            for game_idx in range(num_games):
+                self.reset_game()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+                # Appliquer le premier coup spécifique
+                self.cross_points.append(start_move)
+                self.played_cell.append(start_move)
+                self.score += 1
 
-            self.screen.fill(self.white)  # Fill screen with white background
+                running = True
+                update_possible_moves = True  # Cette variable doit être réinitialisée pour chaque partie
+                last_move_time = pygame.time.get_ticks()  # Réinitialiser le temps pour chaque partie
 
-            # Drawing grid, dots, sequences, and score
-            for x in range(self.grid_size):
-                for y in range(self.grid_size):
-                    rect = pygame.Rect(x * (self.cell_size + self.margin) + self.margin,
-                                       y * (self.cell_size + self.margin) + self.margin,
-                                       self.cell_size, self.cell_size)
-                    pygame.draw.rect(self.screen, self.black, rect, 1)  # Grid cell borders
+                while running:
 
-            for point in self.cross_points:
-                self.draw_dot(*point, self.black)
+                    current_time = pygame.time.get_ticks()
+                    if update_possible_moves or current_time - last_move_time >= 1000:
+                        possible_moves = self.find_possible_moves()
 
-            for sequence, _ in self.played_sequence:
-                self.draw_line_through_cells(sequence, self.red)
+                        if possible_moves:
+                            random_move = random.choice(possible_moves)
+                            valid, sequence, direction = self.find_valid_sequence_with_center(random_move)
+                            if valid:
+                                self.cross_points.append(random_move)
+                                self.played_cell.append(random_move)
+                                self.score += 1
+                                self.played_sequence.append((sequence, direction))
+                                update_possible_moves = True
+                        else:
+                            running = False
+                        last_move_time = current_time
 
-            # Display score
-            over=""
-            if len(possible_moves)==0:
-                over="Game over"
-            score_text = self.font.render(f'Artificial player (Soft version) -  Score: {self.score} {over}', True, self.black)
-            self.screen.blit(score_text, (10, self.height - 40))
+                    if self.render:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                return
 
-            pygame.display.flip()
-            pygame.time.wait(500)  # Small delay for game loop responsiveness
+                    if self.render:
+                        self.screen.fill(self.white)  # Fill screen with white background
 
-        pygame.quit()
+                        # Drawing grid, dots, sequences, and score
+                        for x in range(self.grid_size):
+                            for y in range(self.grid_size):
+                                rect = pygame.Rect(x * (self.cell_size + self.margin) + self.margin,
+                                                   y * (self.cell_size + self.margin) + self.margin,
+                                                   self.cell_size, self.cell_size)
+                                pygame.draw.rect(self.screen, self.black, rect, 1)  # Grid cell borders
+
+                        for point in self.cross_points:
+                            self.draw_dot(*point, self.black)
+
+                        for sequence, _ in self.played_sequence:
+                            self.draw_line_through_cells(sequence, self.red)
+
+                        # Display score
+                        over = ""
+                        if len(possible_moves) == 0:
+                            over = "Game over"
+
+                        score_text = self.font.render(f'Artificial player (Soft version) -  Score: {self.score} {over}',
+                                                      True, self.black)
+                        self.screen.blit(score_text, (10, self.height - 40))
+
+                        pygame.display.flip()
+
+                if self.score > series_best_score:
+                    series_best_score = self.score
+                    series_best_move = start_move
+
+            print(f"Meilleur score pour le coup de départ {start_move}: {series_best_score}")
+            if series_best_score > global_best_score:
+                global_best_score = series_best_score
+                global_best_move = series_best_move
+
+        # Affiche le meilleur score global et le meilleur coup de départ après toutes les séries
+        print(f"Meilleur score global obtenu: {global_best_score} avec le coup de départ {global_best_move}")
+        if self.render:
+            pygame.quit()
 
 
 if __name__ == "__main__":
-    game = RandomPlayer()
+    game = RandomPlayer(render=True)  # Active le rendu
     game.main_loop()

@@ -15,6 +15,9 @@ class GameInit:
         self.invalid_moves = []  # Initialize a list to track invalid moves and their display time
         self.coord_font = pygame.font.Font(None, 20)  # Smaller font for coordinates
 
+        self.all_valid_sequences = []  # Ajout pour stocker les séquences valides détectées
+        self.sequence_ends = []
+
         # Window size
         self.width = self.grid_size * (self.cell_size + self.margin) + self.margin
         # Window size with extra space for the score display
@@ -116,6 +119,47 @@ class GameInit:
                     if not self.is_sequence_overlapping(sequence, normalized_direction, self.played_sequence):
                         return True, sequence, normalized_direction
         return False, None, None
+
+    def find_all_valid_sequences_with_center(self, new_cell):
+        all_valid_sequences = []
+        directions = [
+            (0, 1),  # Up
+            (0, -1),  # Down
+            (1, 0),  # Right
+            (-1, 0),  # Left
+            (1, 1),  # Diagonal up-right
+            (-1, -1),  # Diagonal down-left
+            (1, -1),  # Diagonal down-right
+            (-1, 1),  # Diagonal up-left
+        ]
+
+        for direction in directions:
+            for shift in range(-4, 1):
+                sequence = []
+                for i in range(5):
+                    next_cell = (new_cell[0] + (i + shift) * direction[0], new_cell[1] + (i + shift) * direction[1])
+                    if 0 <= next_cell[0] < self.grid_size and 0 <= next_cell[1] < self.grid_size:
+                        sequence.append(next_cell)
+                    else:
+                        break
+
+                if len(sequence) == 5 and all(cell in self.cross_points or cell == new_cell for cell in sequence):
+                    normalized_direction = self.normalize_direction(direction)
+                    if not self.is_sequence_overlapping(sequence, normalized_direction, self.played_sequence):
+                        self.all_valid_sequences.append((sequence, normalized_direction))
+
+        return self.all_valid_sequences
+
+    def highlight_sequence_ends(self, all_valid_sequences):
+        for sequence, _ in all_valid_sequences:
+            # Prendre en compte uniquement les extrémités de chaque séquence
+            for end in (sequence[0], sequence[-1]):
+                self.draw_dot(*end, self.red)  # Dessiner les extrémités en bleu
+
+    def is_click_on_end(self, cell):
+        # Vérifier si le clic est sur l'une des extrémités des séquences valides
+        return cell in self.sequence_ends
+
 
     def draw_line_through_cells(self, sequence, color, width=5):
         # This function assumes 'sequence' is a list of tuples, where each tuple is (x, y) representing cell coordinates
@@ -222,11 +266,15 @@ class GameInit:
                     cell = self.get_cell_from_mouse_pos(pos)
                     valid, sequence, direction = self.find_valid_sequence_with_center(cell)
 
+                    print(self.find_all_valid_sequences_with_center(cell))
+
                     if cell not in self.cross_points and valid:
                         self.cross_points.append(cell)
                         self.played_cell.append(cell)
                         self.score += 1
                         self.played_sequence.append((sequence, direction))  # Include direction
+
+
 
                         print("Played moves: ", self.played_sequence)
                         # After each valid move, check if other lines can be created
@@ -300,6 +348,24 @@ class GameInit:
             pygame.display.flip()
 
         pygame.quit()
+
+    def play_sequence(self, sequence):
+        # Ajouter les cellules de la séquence dans les croix jouées, si elles ne sont pas déjà présentes
+        for cell in sequence:
+            if cell not in self.cross_points:
+                self.cross_points.append(cell)
+
+        # Dessiner la ligne pour la séquence sélectionnée
+        self.draw_line_through_cells(sequence, self.green)  # Supposons que self.green est la couleur des lignes
+
+        # Mettre à jour le score. On pourrait par exemple augmenter le score de 1 pour chaque cellule ajoutée
+        self.score += len([cell for cell in sequence if cell not in self.played_cell])
+        self.played_cell.extend(sequence)  # Ajouter la séquence aux cellules jouées pour éviter les doublons
+
+        # Ajouter la séquence jouée et sa direction à la liste des séquences jouées, si nécessaire
+        # Cela nécessite de calculer ou de connaître la direction de la séquence, que nous simplifierons ici
+        # par un tuple vide, à remplacer par la logique appropriée pour votre jeu
+        self.played_sequence.append((sequence, ()))  # Remplacer () par la direction réelle si utilisée
 
 
 if __name__ == "__main__":
