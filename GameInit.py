@@ -254,7 +254,7 @@ class GameInit:
         while running:
             if update_possible_moves:
                 possible_moves = self.find_possible_moves()  # Find possible moves at the current state
-                print("Possible moves: ", possible_moves)  # Print the list of possible moves
+                print("Possible moves: ", len(possible_moves))  # Print the list of possible moves
                 update_possible_moves = False  # Reset flag until the next change
 
             for event in pygame.event.get():
