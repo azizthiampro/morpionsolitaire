@@ -1,4 +1,4 @@
-import pygame
+#import pygame
 import sys
 import random
 
@@ -205,7 +205,7 @@ class RandomPlayer:
         self.played_sequence = []
         self.score = 0
 
-    def main_loop(self, num_games=10):
+    def main_loop(self, num_games=3):
         global_best_score = 0  # Pour garder trace du meilleur score global
         global_best_move = None  # Pour garder trace du meilleur coup de départ global
 
@@ -226,12 +226,12 @@ class RandomPlayer:
 
                 running = True
                 update_possible_moves = True  # Cette variable doit être réinitialisée pour chaque partie
-                last_move_time = pygame.time.get_ticks()  # Réinitialiser le temps pour chaque partie
+
 
                 while running:
 
-                    current_time = pygame.time.get_ticks()
-                    if update_possible_moves or current_time - last_move_time >= 1000:
+
+                    if update_possible_moves :
                         possible_moves = self.find_possible_moves()
 
                         if possible_moves:
@@ -245,7 +245,7 @@ class RandomPlayer:
                                 update_possible_moves = True
                         else:
                             running = False
-                        last_move_time = current_time
+
 
                     if self.render:
                         for event in pygame.event.get():
@@ -297,5 +297,5 @@ class RandomPlayer:
 
 
 if __name__ == "__main__":
-    game = RandomPlayer(render=True)  # Active le rendu
+    game = RandomPlayer(render=False)  # Active le rendu
     game.main_loop()
