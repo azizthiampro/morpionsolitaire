@@ -1,4 +1,4 @@
-#import pygame
+import pygame
 import sys
 import random
 
@@ -213,6 +213,7 @@ class RandomPlayer:
         initial_possible_moves = self.find_possible_moves()  # Trouve tous les coups de départ possibles
 
         for start_move in initial_possible_moves:
+            print(start_move)
             series_best_score = 0  # Meilleur score pour la série de jeux en cours
             series_best_move = None  # Meilleur coup pour la série de jeux en cours
 
@@ -222,6 +223,7 @@ class RandomPlayer:
                 # Appliquer le premier coup spécifique
                 self.cross_points.append(start_move)
                 self.played_cell.append(start_move)
+                print(self.played_cell)
                 self.score += 1
 
                 running = True
@@ -297,5 +299,5 @@ class RandomPlayer:
 
 
 if __name__ == "__main__":
-    game = RandomPlayer(render=False)  # Active le rendu
+    game = RandomPlayer(render=True)  # Active le rendu
     game.main_loop()
