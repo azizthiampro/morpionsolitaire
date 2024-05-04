@@ -90,12 +90,16 @@ class RandomPlayer2:
     def main_loop(self, num_games=10):
 
         game_data = []
+        phase = 1
         while True:
+            print(f"Début de la Phase {phase}")
+
             self.reset_game()
             for move in self.best_moves:
                 self.cross_points.add(move)
 
             possible_moves = self.find_possible_moves()
+            print(f"{len(possible_moves)} coups possibles à évaluer : {possible_moves}\n")
             if not possible_moves:
                 break
 
@@ -109,29 +113,29 @@ class RandomPlayer2:
                 self.reset_game()
                 for prev_move in self.best_moves:
                     self.cross_points.add(prev_move)
+
                 self.cross_points.add(move)
-                for _ in range(num_games):
-                    current_score, current_sequence,  sequence, direction = self.simulate_game(move)
-                    print(f"{len(current_sequence)}, score : {current_score}, ancien record : {best_score}")
-                    if current_score > best_score:
-                        b_sequence = sequence
-                        b_direction = direction
-                        best_score = current_score
-                        best_move = move
-                        best_sequence = current_sequence
+
+                current_score, current_sequence,  sequence, direction = self.simulate_game(move, num_games)
+
+                if current_score > best_score:
+                    print(f"Le coup {move} a battu l'ancien record de {best_score}  avec un score de {current_score}\n")
+                    b_sequence = sequence
+                    b_direction = direction
+                    best_score = current_score
+                    best_move = move
+                    best_sequence = current_sequence
 
             end_time = time.time()  # Enregistrer le temps de fin
             elapsed_time = end_time - start_time  # Calculer le temps écoulé
 
             if best_move:
-
-
-                self.played_sequence.append((b_sequence, b_direction))
+                print(f"Le meilleur coup trouvé de la phase {phase} est : {best_move} avec un score record de {best_score}")
+                phase +=1
+                self.played_sequence.append((b_sequence, b_direction)) #Ajout de la sequence du best_move
                 self.best_moves.append(best_move)
-                print(f"Added new best move: {best_move} with score {best_score}")
-                print(f"sequence founded : {self.played_sequence}")
-                print(f"Best sequence for this move: {len(best_sequence)}")
-                print(f"Time taken to find this move: {elapsed_time:.2f} seconds")  # Afficher le temps pris
+                print(f"Séquence ayant engendré ce score: {best_sequence}")
+                print(f"Coup trouvé en : {elapsed_time:.2f} secondes")  # Afficher le temps pris
 
                 #Ecriture des résultats dans un fichier csv
                 data = {"possibles_moves": len(possible_moves), "best_move": best_move, "score": best_score,
@@ -146,7 +150,7 @@ class RandomPlayer2:
         colonnes = game_data[0].keys()
 
         # Écrire les données dans le fichier CSV
-        with open("records2.csv", mode='w', newline='') as fichier_csv:
+        with open("records3.csv", mode='w', newline='') as fichier_csv:
             writer = csv.DictWriter(fichier_csv, fieldnames=colonnes)
             writer.writeheader()
             for ligne in game_data:
@@ -154,37 +158,55 @@ class RandomPlayer2:
 
         print(f"Final moves: {len(self.played_sequence)}")
 
-    def simulate_game(self, initial_move):
-        cross_points_simulation = self.cross_points.copy()
-        played_sequence_simulation = self.played_sequence.copy()
-        score_simulation = 1
-        game_sequence = [initial_move]  # Initialiser avec le premier mouvement joué
+    def simulate_game(self, initial_move, n_simulation):
+        print(f"Début des simulations pour le coup {initial_move}")
+        c = 1
+        best_simulation_score = 0
+        best_simulation_sequence = None
+        for _ in range(n_simulation):
 
-        cross_points_simulation.add(initial_move)
-        valid, initial_sequence, initial_direction = self.find_valid_sequence_with_center(initial_move)
-        if valid:
-            played_sequence_simulation.append((initial_sequence, initial_direction))
+            cross_points_simulation = self.cross_points.copy()
+            played_sequence_simulation = self.played_sequence.copy()
+            score_simulation = 0
+            game_sequence = []
+            #Pour chaque séquence déjà trouvé mettre à jour le score
+            for seq in played_sequence_simulation:
+                score_simulation +=1
+                game_sequence.append(seq)
 
-        while True:
-            possible_moves = self.find_possible_moves_simulation(cross_points_simulation, played_sequence_simulation)
-            if not possible_moves:
-                break
-
-            random_move = random.choice(possible_moves)
-            game_sequence.append(random_move)  # Ajouter chaque nouveau mouvement à la séquence
-            cross_points_simulation.add(random_move)
-            score_simulation += 1
-
-            valid, sequence, direction = self.find_valid_sequence_with_center_simulation(random_move,
-                                                                                         cross_points_simulation,
-                                                                                         played_sequence_simulation)
+            valid, initial_sequence, initial_direction = self.find_valid_sequence_with_center(initial_move)
             if valid:
-                played_sequence_simulation.append((sequence, direction))
+                played_sequence_simulation.append((initial_sequence, initial_direction))
+                cross_points_simulation.add(initial_move)
+                score_simulation += 1
+                game_sequence.append((initial_sequence, initial_direction))
 
+            while True:
+                possible_moves = self.find_possible_moves_simulation(cross_points_simulation, played_sequence_simulation)
+                if not possible_moves:
+                    break
 
-        return score_simulation, played_sequence_simulation, initial_sequence, initial_direction # Retourner le score et la séquence
+                random_move = random.choice(possible_moves)
+                valid, sequence, direction = self.find_valid_sequence_with_center_simulation(random_move,
+                                                                                             cross_points_simulation,
+                                                                                             played_sequence_simulation)
+                if valid:
+                    played_sequence_simulation.append((sequence, direction))
+                    score_simulation += 1
+                    cross_points_simulation.add(random_move)
+                    game_sequence.append(random_move)  # Ajouter chaque nouveau mouvement à la séquence
+
+            print(f"Simulation {c} : {score_simulation}")
+            c += 1
+            if score_simulation > best_simulation_score:
+                best_simulation_score = score_simulation
+                best_simulation_sequence = game_sequence
+
+        print(f"Meilleur score des {n_simulation} simulations: {best_simulation_score}\n")
+        return best_simulation_score, best_simulation_sequence, initial_sequence, initial_direction # Retourner le score et la séquence
 
     def find_possible_moves_simulation(self, cross_points, played_sequence):
+        random.shuffle(RandomPlayer2.DIRECTIONS)
         possible_moves = set()
         for x in range(self.grid_size):
             for y in range(self.grid_size):
