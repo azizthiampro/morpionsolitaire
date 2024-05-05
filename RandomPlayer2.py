@@ -185,7 +185,8 @@ class RandomPlayer2:
         # En-têtes des colonnes (clés des dictionnaires)
 
         print(f"Final moves: {self.best_moves}")
-        print(f"Final moves: {self.played_sequence}")
+        print(f"Final sequences: {self.played_sequence}")
+        print(f"Score final : {len(self.best_moves)}")
         return len(self.best_moves)
 
     def simulate_game(self, initial_move, n_simulation):
@@ -300,7 +301,7 @@ class RandomPlayer2:
         return False
 
 if __name__ == "__main__":
-    nbre_simulation = 2
+    nbre_simulation = 1
     nbre_test = 10
     player = RandomPlayer2()
 
