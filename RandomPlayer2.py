@@ -89,6 +89,10 @@ class RandomPlayer2:
 
     def main_loop(self, num_games=10):
 
+        self.reset_game()
+        self.played_sequence = []
+        self.best_moves = []
+
         game_data = []
         phase = 1
 
@@ -137,7 +141,7 @@ class RandomPlayer2:
             elapsed_time = end_time - start_time  # Calculer le temps écoulé
 
             if best_move:
-                print(f"Le meilleur coup trouvé de la phase {phase} est : {best_move} avec un score record de {best_score}\n")
+                print(f"Le meilleur coup trouvé de la phase {phase} est : {best_move} avec un score record de {best_score}")
                 # print(f"liste des coups joués : {best_moves_played}\n")
                 # print(f"liste des sequences joués: {best_sequence}\n")
                 # print(f"Sequences trouvées: {self.played_sequence}")
@@ -151,39 +155,38 @@ class RandomPlayer2:
                     self.played_sequence.append((b_sequence, b_direction)) #Ajout de la sequence du best_move
                     self.best_moves.append(best_move)
                     global_best_sequences = best_sequence
-                    print(len(global_best_moves), len(global_best_sequences))
                     print(f"Suite de coup ayant engendré ce score: {global_best_moves}")
                 else:
                     print(f"L'ancien record de {global_best_score} des phases précédentes n'a pas été battu")
                     print(f"On conserve l'ancienne suite de coup :{global_best_moves}")
-                    print(f"On joue le coup suivant dans l'ancienne suite qui est le coup :{global_best_moves[len(self.best_moves)]}")
-                    self.best_moves.append(global_best_moves[len(self.best_moves)])
-                    self.played_sequence.append(global_best_sequences[len(self.played_sequence)])
+
+                    move1 = global_best_moves[len(self.best_moves)]
+                    self.best_moves.append(move1)
+
+                    sequence1 = global_best_sequences[len(self.played_sequence)]
+                    self.played_sequence.append(sequence1)
+
+                    try:
+                        move2 = global_best_moves[len(self.best_moves)]
+                        print(move1, move2)
+                        self.best_moves.append(move2)
+                        sequence2 = global_best_sequences[len(self.played_sequence)]
+                        self.played_sequence.append(sequence2)
+                        print(f"On joue les 2 prochains coups dans l'ancienne suite qui est de coups :{move1} et {move2}")
+                    except:
+                        print(f"On joue le prochain coup dans l'ancienne suite qui est le coup :{move1}")
 
                 print(f"Coup trouvé en : {elapsed_time:.2f} secondes")  # Afficher le temps pris
                 phase += 1
-
-
-                #Ecriture des résultats dans un fichier csv
-                data = {"possibles_moves": len(possible_moves), "best_move": best_move, "score": best_score,
-                        "elapsed_time": elapsed_time, "sequence": b_sequence, "direction": b_direction}
-
-                game_data.append(data)
 
             else:
                 break
 
         # En-têtes des colonnes (clés des dictionnaires)
-        colonnes = game_data[0].keys()
 
-        # Écrire les données dans le fichier CSV
-        with open("records3.csv", mode='w', newline='') as fichier_csv:
-            writer = csv.DictWriter(fichier_csv, fieldnames=colonnes)
-            writer.writeheader()
-            for ligne in game_data:
-                writer.writerow(ligne)
-
-        print(f"Final moves: {len(self.played_sequence)}")
+        print(f"Final moves: {self.best_moves}")
+        print(f"Final moves: {self.played_sequence}")
+        return len(self.best_moves)
 
     def simulate_game(self, initial_move, n_simulation):
         print(f"Début des simulations pour le coup {initial_move}")
@@ -297,6 +300,14 @@ class RandomPlayer2:
         return False
 
 if __name__ == "__main__":
+    nbre_simulation = 2
+    nbre_test = 10
     player = RandomPlayer2()
+
     # Lancement de la simulation
-    player.main_loop(num_games=1)
+    fichier = "records.txt"
+    for i in range(nbre_test):
+        score = player.main_loop(num_games=nbre_simulation)
+        with open("records.txt", "a") as F:
+            text = f"{nbre_simulation}, {score} \n"
+            F.write(text)
