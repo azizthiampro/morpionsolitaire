@@ -301,7 +301,7 @@ class RandomPlayer2:
         return False
 
 if __name__ == "__main__":
-    nbre_simulation = 1
+    nbre_simulation = 4
     nbre_test = 10
     player = RandomPlayer2()
 
