@@ -187,7 +187,7 @@ class RandomPlayer2:
         print(f"Final moves: {self.best_moves}")
         print(f"Final sequences: {self.played_sequence}")
         print(f"Score final : {len(self.best_moves)}")
-        return len(self.best_moves)
+        return len(self.best_moves), self.played_sequence, self.best_moves
 
     def simulate_game(self, initial_move, n_simulation):
         print(f"Début des simulations pour le coup {initial_move}")
@@ -301,14 +301,23 @@ class RandomPlayer2:
         return False
 
 if __name__ == "__main__":
-    nbre_simulation = 4
+    nbre_simulation = 1
     nbre_test = 10
     player = RandomPlayer2()
 
     # Lancement de la simulation
     fichier = "records.txt"
+    best_score = 0
     for i in range(nbre_test):
-        score = player.main_loop(num_games=nbre_simulation)
+        score, played_sequence, moves = player.main_loop(num_games=nbre_simulation)
+
         with open("records.txt", "a") as F:
             text = f"{nbre_simulation}, {score} \n"
             F.write(text)
+
+        #Enregistrement de la meilleur sequence
+        if score > best_score:
+            best_score = score
+            with open("sequence.txt", "w") as f:
+                seq = f"{played_sequence} \n{moves} "
+                f.write(seq)
