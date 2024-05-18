@@ -3,7 +3,7 @@ import time
 import csv
 from functools import lru_cache
 
-class RandomPlayer2:
+class MonteCarloPlayer:
     DIRECTIONS = [
         (0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)
     ]
@@ -50,8 +50,8 @@ class RandomPlayer2:
         return False
 
     def find_valid_sequence_with_center(self, new_cell):
-        random.shuffle(RandomPlayer2.DIRECTIONS)
-        for direction in RandomPlayer2.DIRECTIONS:
+        random.shuffle(MonteCarloPlayer.DIRECTIONS)
+        for direction in MonteCarloPlayer.DIRECTIONS:
             for shift in range(-4, 1):
                 sequence = [
                     (new_cell[0] + (i + shift) * direction[0], new_cell[1] + (i + shift) * direction[1])
@@ -70,7 +70,7 @@ class RandomPlayer2:
                 cell = (x, y)
                 if cell in self.cross_points:
                     continue
-                for direction in RandomPlayer2.DIRECTIONS:
+                for direction in MonteCarloPlayer.DIRECTIONS:
                     is_valid_move = False
                     for shift in range(-4, 1):
                         potential_sequence = [
@@ -142,10 +142,6 @@ class RandomPlayer2:
 
             if best_move:
                 print(f"Le meilleur coup trouvé de la phase {phase} est : {best_move} avec un score record de {best_score}")
-                # print(f"liste des coups joués : {best_moves_played}\n")
-                # print(f"liste des sequences joués: {best_sequence}\n")
-                # print(f"Sequences trouvées: {self.played_sequence}")
-                # print(f"coups trouvées: {self.best_moves}")
 
                 if best_score > global_best_score:
                     print(f"Il bat l'ancien record de {global_best_score} des phases précédentes")
@@ -244,14 +240,14 @@ class RandomPlayer2:
         return best_simulation_score, best_simulation_sequence, best_simulation_moves, initial_sequence, initial_direction # Retourner le score et la séquence
 
     def find_possible_moves_simulation(self, cross_points, played_sequence):
-        random.shuffle(RandomPlayer2.DIRECTIONS)
+        random.shuffle(MonteCarloPlayer.DIRECTIONS)
         possible_moves = set()
         for x in range(self.grid_size):
             for y in range(self.grid_size):
                 cell = (x, y)
                 if cell in cross_points:
                     continue
-                for direction in RandomPlayer2.DIRECTIONS:
+                for direction in MonteCarloPlayer.DIRECTIONS:
                     is_valid_move = False
                     for shift in range(-4, 1):
                         potential_sequence = [
@@ -273,8 +269,8 @@ class RandomPlayer2:
         return list(possible_moves)
 
     def find_valid_sequence_with_center_simulation(self, new_cell, cross_points, played_sequence):
-        random.shuffle(RandomPlayer2.DIRECTIONS)
-        for direction in RandomPlayer2.DIRECTIONS:
+        random.shuffle(MonteCarloPlayer.DIRECTIONS)
+        for direction in MonteCarloPlayer.DIRECTIONS:
             for shift in range(-4, 1):
                 sequence = [
                     (new_cell[0] + (i + shift) * direction[0], new_cell[1] + (i + shift) * direction[1])
@@ -301,9 +297,9 @@ class RandomPlayer2:
         return False
 
 if __name__ == "__main__":
-    nbre_simulation = 1
+    nbre_simulation = 4
     nbre_test = 10
-    player = RandomPlayer2()
+    player = MonteCarloPlayer()
 
     # Lancement de la simulation
     fichier = "records.txt"

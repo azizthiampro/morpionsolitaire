@@ -2,7 +2,7 @@ import pygame
 import sys
 
 
-class GameInit:
+class HumanPlayer:
     def __init__(self):
         pygame.init()
 
@@ -64,6 +64,22 @@ class GameInit:
         grid_x = x // (self.cell_size + self.margin)
         grid_y = y // (self.cell_size + self.margin)
         return grid_x, grid_y
+
+    def draw_line_through_cells(self, sequence, color, width=5):
+        # This function assumes 'sequence' is a list of tuples, where each tuple is (x, y) representing cell coordinates
+        if len(sequence) < 2:
+            return  # Need at least two points to draw a line
+
+        # Convert cell coordinates to pixel coordinates (center of each cell)
+        points = []
+        for cell in sequence:
+            center_x = cell[0] * (self.cell_size + self.margin) + self.margin + self.cell_size // 2
+            center_y = cell[1] * (self.cell_size + self.margin) + self.margin + self.cell_size // 2
+            points.append((center_x, center_y))
+
+        # Draw the line through all points
+        pygame.draw.lines(self.screen, color, False, points, width)
+
 
     def normalize_direction(self, direction):
         dx, dy = direction
@@ -161,20 +177,7 @@ class GameInit:
         return cell in self.sequence_ends
 
 
-    def draw_line_through_cells(self, sequence, color, width=5):
-        # This function assumes 'sequence' is a list of tuples, where each tuple is (x, y) representing cell coordinates
-        if len(sequence) < 2:
-            return  # Need at least two points to draw a line
 
-        # Convert cell coordinates to pixel coordinates (center of each cell)
-        points = []
-        for cell in sequence:
-            center_x = cell[0] * (self.cell_size + self.margin) + self.margin + self.cell_size // 2
-            center_y = cell[1] * (self.cell_size + self.margin) + self.margin + self.cell_size // 2
-            points.append((center_x, center_y))
-
-        # Draw the line through all points
-        pygame.draw.lines(self.screen, color, False, points, width)
 
     def can_create_line(self, points):
         directions = [(0, 1),  # Up
@@ -349,26 +352,26 @@ class GameInit:
 
         pygame.quit()
 
-    def play_sequence(self, sequence):
-        # Ajouter les cellules de la séquence dans les croix jouées, si elles ne sont pas déjà présentes
-        for cell in sequence:
-            if cell not in self.cross_points:
-                self.cross_points.append(cell)
-
-        # Dessiner la ligne pour la séquence sélectionnée
-        self.draw_line_through_cells(sequence, self.green)  # Supposons que self.green est la couleur des lignes
-
-        # Mettre à jour le score. On pourrait par exemple augmenter le score de 1 pour chaque cellule ajoutée
-        self.score += len([cell for cell in sequence if cell not in self.played_cell])
-        self.played_cell.extend(sequence)  # Ajouter la séquence aux cellules jouées pour éviter les doublons
-
-        # Ajouter la séquence jouée et sa direction à la liste des séquences jouées, si nécessaire
-        # Cela nécessite de calculer ou de connaître la direction de la séquence, que nous simplifierons ici
-        # par un tuple vide, à remplacer par la logique appropriée pour votre jeu
-        self.played_sequence.append((sequence, ()))  # Remplacer () par la direction réelle si utilisée
-
+    # def play_sequence(self, sequence):
+    #     # Ajouter les cellules de la séquence dans les croix jouées, si elles ne sont pas déjà présentes
+    #     for cell in sequence:
+    #         if cell not in self.cross_points:
+    #             self.cross_points.append(cell)
+    #
+    #     # Dessiner la ligne pour la séquence sélectionnée
+    #     self.draw_line_through_cells(sequence, self.green)  # Supposons que self.green est la couleur des lignes
+    #
+    #     # Mettre à jour le score. On pourrait par exemple augmenter le score de 1 pour chaque cellule ajoutée
+    #     self.score += len([cell for cell in sequence if cell not in self.played_cell])
+    #     self.played_cell.extend(sequence)  # Ajouter la séquence aux cellules jouées pour éviter les doublons
+    #
+    #     # Ajouter la séquence jouée et sa direction à la liste des séquences jouées, si nécessaire
+    #     # Cela nécessite de calculer ou de connaître la direction de la séquence, que nous simplifierons ici
+    #     # par un tuple vide, à remplacer par la logique appropriée pour votre jeu
+    #     self.played_sequence.append((sequence, ()))  # Remplacer () par la direction réelle si utilisée
+    #
 
 if __name__ == "__main__":
-    game = GameInit()
+    game = HumanPlayer()
     game.main_loop()
 
